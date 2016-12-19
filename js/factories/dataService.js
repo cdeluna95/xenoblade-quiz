@@ -223,7 +223,7 @@
           answer: "Yelv"
         },
         {
-          answer: "Meyneth"
+          answer: "Egil"
         }
       ],
       selected: null,

@@ -157,7 +157,7 @@
                     <div class="col-sm-6" ng-repeat="answer in results.dataService.quizQuestions[results.activeQuestion].possibilities">
                       <div class="quiz-img-answer"
                         ng-class="results.getAnswerClass($index)">
-                        <img src="{{answer.answer}}" alt="">
+                        <img ng-src="{{answer.answer}}" alt="">
                       </div>
                     </div>
                   </div>
