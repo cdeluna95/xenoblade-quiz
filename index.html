@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="AngularQuiz">
+  <head>
+    <!-- Required -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Title -->
+    <title>Christan de Luna - Xenoblade Chronicles Quiz</title>
+    <!-- Favicon and Core CSS files -->
+    <link type="image/png" rel="shortcut icon" href="images/favicon.png" />
+    <link type="text/css" rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="style.css" />
+  </head>
+  
+  <body>
+    
+    <!-- Main -->
+    <main id="main">
+      
+      <!-- Home Controller -->
+      <section id="home" ng-controller="HomeController as home" ng-hide="home.quizMetrics.quizActive || home.quizMetrics.resultsActive">
+        <div class="container">
+          <div class="home-desc">
+            <img class="xenoblade-logo img-responsive" src="images/xenoblade-logo.png" alt="">
+            <h2>A Xenoblade Chronicles Quiz</h2>
+          </div>
+          <div class="home-btn">
+            <button class="btn-start" ng-click="home.activateQuiz()">Start</button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Quiz Controller -->
+      <section id="quiz" ng-controller="QuizController as quiz" ng-show="quiz.quizMetrics.quizActive">
+        <div class="container">
+          <!-- Quiz Description -->
+          <div class="quiz-desc">
+            <h3>Progress: </h3>
+            <div class="quiz-btn-progress">
+              <button class="btn"
+                ng-class="{'btn-answered': question.selected !== null, 'btn-unanswered': question.selected === null}"
+                ng-repeat="question in quiz.dataService.quizQuestions"
+                ng-click="quiz.setActiveQuestion($index)">
+                <span class="fa"
+                  ng-class="{'fa-pencil': question.selected !== null, 'fa-question': question.selected === null}">
+                </span>
+              </button>
+            </div>
+          </div>
+          <!-- Quiz Questions -->
+          <div class="quiz-questions">
+            <!-- Error -->
+            <div class="quiz-error" ng-show="quiz.error">
+              Error: Complete all questions!
+              <button class="quiz close" ng-click="quiz.error = false">&times;</button>
+            </div>
+            <div class="quiz-questions-wrapper" ng-hide="quiz.finalize">
+              <!-- Question -->
+              <div class="row">
+                <div class="col-xs-12">
+                  <h4>
+                    {{quiz.activeQuestion + 1 + ". " + quiz.dataService.quizQuestions[quiz.activeQuestion].text}}
+                  </h4>
+                  <!-- Text answer -->
+                  <div class="row" ng-if="quiz.dataService.quizQuestions[quiz.activeQuestion].type === 'text'">
+                    <div class="col-sm-6" ng-repeat="answer in quiz.dataService.quizQuestions[quiz.activeQuestion].possibilities">
+                      <h4 class="quiz-answer"
+                        ng-class="{'quiz-answer-selected': $index === quiz.dataService.quizQuestions[quiz.activeQuestion].selected}"
+                        ng-click="quiz.selectAnswer($index)">
+                        {{answer.answer}}
+                      </h4>
+                    </div>
+                  </div>
+                  <!-- Image answer -->
+                  <div class="row" ng-if="quiz.dataService.quizQuestions[quiz.activeQuestion].type === 'image'">
+                    <div class="col-sm-6" ng-repeat="answer in quiz.dataService.quizQuestions[quiz.activeQuestion].possibilities">
+                      <div class="quiz-img-answer"
+                        ng-class="{'quiz-img-selected': $index === quiz.dataService.quizQuestions[quiz.activeQuestion].selected}"
+                        ng-click="quiz.selectAnswer($index)">
+                        <img ng-src="{{answer.answer}}" alt="">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="quiz-continue">
+                <button class="btn-continue" ng-click="quiz.questionAnswered()">
+                  Continue
+                </button>
+              </div>
+            </div>
+            <!-- Final prompt -->
+            <div class="quiz-final" ng-show="quiz.finalize">
+              <div class="row">
+                <div class="col-xs-12">
+                  <h3>Are you sure you're finished?</h3>
+                  <button class="btn-finished" ng-click="quiz.finalizeAnswers()">Yes</button>
+                  <button class="btn-unfinished" ng-click="quiz.finalize = false">No</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Results Controller -->
+      <section id="results" ng-controller="ResultsController as results" ng-show="results.quizMetrics.resultsActive">
+        <div class="container">
+          <!-- Results Description --> 
+          <div class="results-desc">
+            <h3>Results: </h3>
+            <div class="results-btn-results">
+              <button class="btn"
+                ng-class="{'btn-correct': question.correct, 'btn-incorrect': !question.correct}"
+                ng-repeat="question in results.dataService.quizQuestions"
+                ng-click="results.setActiveQuestion($index)">
+                <span class="fa"
+                  ng-class="{'fa-check': question.correct, 'fa-times': !question.correct}">
+                </span>
+              </button>
+            </div>
+          </div>
+          <div class="results-perc">
+            <div class="row">
+              <div class="col-xs-12">
+                <h4>You scored {{results.quizMetrics.numCorrect}} / {{results.dataService.quizQuestions.length}} ({{results.calculatePerc() | number:2}}%)</h4>
+              </div>
+            </div>
+          </div>
+          <!-- Quiz Questions -->
+          <div class="results-questions">
+            <div class="results-wrapper">
+              <!-- Question -->
+              <div class="row">
+                <div class="col-xs-12">
+                  <h4>{{results.activeQuestion + 1 + ". " + results.dataService.quizQuestions[results.activeQuestion].text}}</h4>
+                  <!-- Text answer -->
+                  <div class="row" ng-if="results.dataService.quizQuestions[results.activeQuestion].type === 'text'">
+                    <div class="col-sm-6" ng-repeat="answer in results.dataService.quizQuestions[results.activeQuestion].possibilities">
+                      <h4 class="quiz-answer" ng-class="results.getAnswerClass($index)">
+                        {{answer.answer}}
+                        <span class="incorrect-txt-answer"
+                          ng-show="$index !== results.quizMetrics.correctAnswers[results.activeQuestion]
+                          && $index === results.dataService.quizQuestions[results.activeQuestion].selected">
+                          <i class="fa fa-times" aria-hidden="true"></i>
+                        </span>
+                        <span class="correct-txt-answer"
+                          ng-show="$index === results.quizMetrics.correctAnswers[results.activeQuestion]">
+                          <i class="fa fa-check" aria-hidden="true"></i>
+                        </span>
+                      </h4>
+                    </div>
+                  </div>
+                  <!-- Image answer -->
+                  <div class="row" ng-if="results.dataService.quizQuestions[results.activeQuestion].type === 'image'">
+                    <div class="col-sm-6" ng-repeat="answer in results.dataService.quizQuestions[results.activeQuestion].possibilities">
+                      <div class="quiz-img-answer"
+                        ng-class="results.getAnswerClass($index)">
+                        <img src="{{answer.answer}}" alt="">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Home Button -->
+            <div class="results-home">
+              <button class="btn-home" ng-click="results.reset()">
+                Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    
+    </main>
+    
+    <!-- Core JavaScript files  -->
+    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="https://use.fontawesome.com/efd75aa873.js"></script>
+    <!-- Core AngularJS files -->
+    <script src="js/function.js"></script>
+    <script src="js/controllers/home.js"></script>
+    <script src="js/controllers/quiz.js"></script>
+    <script src="js/controllers/results.js"></script>
+    <script src="js/factories/quizMetrics.js"></script>
+    <script src="js/factories/dataService.js"></script>
+  </body>
+</html>
